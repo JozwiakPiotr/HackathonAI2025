@@ -3,7 +3,8 @@ import axios from 'axios'
 
 interface Message {
   role: 'user' | 'assistant'
-  content: string
+  content: string,
+  sources: string[]
 }
 
 const Chat = () => {
@@ -44,12 +45,12 @@ const Chat = () => {
         >
           {selected} ⬆
         </button>
-  
+
         {showOptions && (
           <div
             style={{
               position: 'absolute',
-              bottom: '100%', 
+              bottom: '100%',
               left: 0,
               backgroundColor: 'white',
               border: '1px solid #ccc',
@@ -100,14 +101,14 @@ const Chat = () => {
 
   useEffect(() => {
     scrollToBottom(),
-    fetchDocuments()
+      fetchDocuments()
   }, [messages])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!input.trim() || isLoading) return
 
-    const userMessage: Message = { role: 'user', content: input }
+    const userMessage: Message = { role: 'user', content: input, sources: [] }
     setMessages(prev => [...prev, userMessage])
     setInput('')
     setIsLoading(true)
@@ -115,14 +116,15 @@ const Chat = () => {
 
     try {
       let url = `http://172.20.3.133:8000/query?query=${encodeURIComponent(input)}`
-      if(selected != 'wybierz dokument'){
+      if (selected != 'wybierz dokument') {
         url += `&file=${encodeURIComponent(selected)}`
       }
       const response = await axios.post(url)
 
       const assistantMessage: Message = {
         role: 'assistant',
-        content: response.data.response
+        content: response.data.response,
+        sources: Array.from(new Set(response.data.sources))
       }
       setMessages(prev => [...prev, assistantMessage])
     } catch (error: any) {
@@ -165,6 +167,21 @@ const Chat = () => {
             }}
           >
             {message.content}
+            {message.role == 'assistant' && (
+              <ul
+                style={{
+                  fontSize: '0.75rem',
+                  color: '#718096',
+                  marginTop: '0.25rem',
+                  paddingLeft: '1.2rem',
+                  marginBottom: 0,
+                }}
+              >
+                {message.sources.map((source, i) => (
+                  <li key={i}>{source}</li>
+                ))}
+              </ul>
+            )}
           </div>
         ))}
         {isLoading && (
