@@ -4,33 +4,15 @@ import axios from 'axios'
 interface Message {
   role: 'user' | 'assistant'
   content: string
+  timestamp: string
 }
 
 const Chat = () => {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const [availableModels, setAvailableModels] = useState<string[]>([])
-  const [selectedModel, setSelectedModel] = useState<string>('')
+  const [error, setError] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    // Fetch available models when component mounts
-    const fetchModels = async () => {
-      try {
-        const response = await axios.get('http://172.20.3.133:11434/api/tags')
-        const models = response.data.models.map((model: any) => model.name)
-        setAvailableModels(models)
-        if (models.length > 0) {
-          setSelectedModel(models[0])
-        }
-      } catch (error) {
-        console.error('Error fetching models:', error)
-        alert('Failed to fetch available models. Please make sure Ollama is running.')
-      }
-    }
-    fetchModels()
-  }, [])
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -42,30 +24,32 @@ const Chat = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!input.trim() || !selectedModel) return
+    if (!input.trim()) return
 
-    const userMessage: Message = { role: 'user', content: input }
+    const userMessage: Message = {
+      role: 'user',
+      content: input,
+      timestamp: new Date().toLocaleString()
+    }
     setMessages((prev) => [...prev, userMessage])
     setInput('')
     setIsLoading(true)
+    setError(null)
 
     try {
-      console.log('Sending request to Ollama...')
-      const response = await axios.post('http://172.20.3.133:11434/api/generate', {
-        model: selectedModel,
-        prompt: input,
-        stream: false
-      })
+      console.log('Sending query to API...')
+      const response = await axios.post(`http://172.20.3.133:8000/query/?query=${encodeURIComponent(input)}`)
 
-      console.log('Response from Ollama:', response.data)
+      console.log('Response:', response.data)
       const assistantMessage: Message = {
         role: 'assistant',
-        content: response.data.response,
+        content: response.data.response || response.data.answer || 'No response received',
+        timestamp: new Date().toLocaleString()
       }
       setMessages((prev) => [...prev, assistantMessage])
     } catch (error: any) {
       console.error('Error details:', error)
-      alert(error.response?.data?.error || error.message || 'Failed to get response from Ollama')
+      setError(error.response?.data?.detail?.[0]?.msg || error.message || 'Failed to get response')
     } finally {
       setIsLoading(false)
     }
@@ -73,48 +57,47 @@ const Chat = () => {
 
   return (
     <div style={{
-      width: '100%',
       height: '80vh',
       border: '1px solid #e2e8f0',
       borderRadius: '8px',
       overflow: 'hidden',
       display: 'flex',
-      flexDirection: 'column'
+      flexDirection: 'column',
+      margin: '10px 10px 10px 10px'
     }}>
       <div style={{
         padding: '1rem',
         backgroundColor: 'white',
         borderBottom: '1px solid #e2e8f0'
       }}>
-        <select
-          value={selectedModel}
-          onChange={(e) => setSelectedModel(e.target.value)}
-          style={{
-            padding: '0.5rem',
-            borderRadius: '4px',
-            border: '1px solid #e2e8f0',
-            width: '200px'
-          }}
-        >
-          {availableModels.map((model) => (
-            <option key={model} value={model}>
-              {model}
-            </option>
-          ))}
-        </select>
+        <h2 style={{ margin: 0, color: '#2d3748' }}>Document Q&A Chat</h2>
       </div>
+      
       <div style={{
         flex: 1,
         overflowY: 'auto',
         padding: '1rem',
         backgroundColor: '#f8fafc'
       }}>
+        {error && (
+          <div style={{
+            padding: '1rem',
+            backgroundColor: '#fed7d7',
+            color: '#c53030',
+            borderRadius: '4px',
+            marginBottom: '1rem'
+          }}>
+            {error}
+          </div>
+        )}
+        
         {messages.map((message, index) => (
           <div
             key={index}
             style={{
               display: 'flex',
-              justifyContent: message.role === 'user' ? 'flex-end' : 'flex-start',
+              flexDirection: 'column',
+              alignItems: message.role === 'user' ? 'flex-end' : 'flex-start',
               marginBottom: '1rem'
             }}
           >
@@ -128,12 +111,20 @@ const Chat = () => {
                 boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
               }}
             >
-              {message.content}
+              <div style={{ whiteSpace: 'pre-wrap' }}>{message.content}</div>
+              <div style={{ 
+                fontSize: '0.75rem', 
+                color: message.role === 'user' ? 'rgba(255,255,255,0.8)' : '#718096',
+                marginTop: '0.5rem'
+              }}>
+                {message.timestamp}
+              </div>
             </div>
           </div>
         ))}
         <div ref={messagesEndRef} />
       </div>
+
       <div style={{
         padding: '1rem',
         backgroundColor: 'white',
@@ -144,29 +135,31 @@ const Chat = () => {
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Type your message..."
-            disabled={isLoading || !selectedModel}
+            placeholder="Ask a question about your documents..."
+            disabled={isLoading}
             style={{
               flex: 1,
-              padding: '0.5rem',
+              padding: '0.75rem',
               borderRadius: '4px',
-              border: '1px solid #e2e8f0'
+              border: '1px solid #e2e8f0',
+              fontSize: '1rem'
             }}
           />
           <button
             type="submit"
-            disabled={isLoading || !selectedModel}
+            disabled={isLoading || !input.trim()}
             style={{
-              padding: '0.5rem 1rem',
+              padding: '0.75rem 1.5rem',
               backgroundColor: '#3182ce',
               color: 'white',
               border: 'none',
               borderRadius: '4px',
-              cursor: isLoading || !selectedModel ? 'not-allowed' : 'pointer',
-              opacity: isLoading || !selectedModel ? 0.7 : 1
+              cursor: isLoading || !input.trim() ? 'not-allowed' : 'pointer',
+              opacity: isLoading || !input.trim() ? 0.7 : 1,
+              fontSize: '1rem'
             }}
           >
-            {isLoading ? 'Sending...' : 'Send'}
+            {isLoading ? 'Thinking...' : 'Send'}
           </button>
         </form>
       </div>
