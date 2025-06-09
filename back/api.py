@@ -108,3 +108,13 @@ async def transcript_and_add_to_vector_store(file: UploadFile = File(...)):
     except Exception as e:
         return {"error": str(e)}
     
+@app.get("/document_list/")
+async def document_list():
+    """
+    Endpoint to list all documents in the data folder.
+    """
+    try:
+        files = os.listdir("data")
+        return {"documents": files}
+    except Exception as e:
+        return {"error": str(e)}
