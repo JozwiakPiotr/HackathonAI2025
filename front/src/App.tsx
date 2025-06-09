@@ -1,27 +1,21 @@
-import { useState } from 'react'
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import Navigation from './components/Navigation'
 import Chat from './components/Chat'
-import DocumentUpload from './components/DocumentUpload'
+import DocumentList from './components/DocumentList'
 
 function App() {
-  const [uploadKey, setUploadKey] = useState(0)
-
-  const handleUploadSuccess = () => {
-    // Force chat component to refresh by changing its key
-    setUploadKey(prev => prev + 1)
-  }
-
   return (
-    <div style={{ 
-      maxWidth: '800px', 
-      margin: '0 auto',
-      backgroundColor: '#f7f7f7',
-      maxHeight: '100vh'
-    }}>
-      <Chat key={uploadKey} />
-      <div style={{ marginTop: '2rem' }}>
-        <DocumentUpload onUploadSuccess={handleUploadSuccess} />
+    <Router>
+      <div style={{ minHeight: '100vh', backgroundColor: '#f7fafc' }}>
+        <Navigation />
+        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 1rem' }}>
+          <Routes>
+            <Route path="/" element={<Chat />} />
+            <Route path="/documents" element={<DocumentList />} />
+          </Routes>
+        </div>
       </div>
-    </div>
+    </Router>
   )
 }
 
