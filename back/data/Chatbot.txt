@@ -1,0 +1,1 @@
+Chatbot został zaimplementowany w Pythonie z użyciem FastAPI i Sentence Transformers. Wyszukiwanie informacji odbywa się przy pomocy FAISS, a następnie następuje reranking na podstawie podobieństwa kosinusowego.

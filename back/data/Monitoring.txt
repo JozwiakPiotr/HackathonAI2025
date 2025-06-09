@@ -1,0 +1,1 @@
+System monitorujący oparty jest o Prometheus i Grafana. Zbierane są metryki CPU, RAM, liczby zapytań, błędów oraz czasów odpowiedzi. Alerty są konfigurowane w Alertmanagerze.

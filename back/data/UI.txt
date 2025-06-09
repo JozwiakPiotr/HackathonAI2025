@@ -1,0 +1,1 @@
+Interfejs użytkownika został zaprojektowany zgodnie z zasadami Material Design. Aplikacja wspiera tryb ciemny, dostępność (WCAG 2.1) oraz skalowanie do urządzeń mobilnych. Menu jest konfigurowalne przez administratora.

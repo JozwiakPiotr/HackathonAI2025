@@ -1,0 +1,8 @@
+System logowania naszej aplikacji oparty jest o standard OAuth2. Użytkownik przesyła login i hasło
+do endpointa /api/login, po czym otrzymuje token dostępu ważny przez 60 minut. Token należy
+dołączać do każdego żądania w nagłówku Authorization w formacie: Bearer <token>.
+
+W przypadku wygaśnięcia tokena, należy użyć endpointa /api/refresh aby uzyskać nowy token.
+
+System wspiera role: ADMIN, USER oraz GUEST. Tylko użytkownicy z rolą ADMIN mają dostęp
+do panelu zarządzania użytkownikami i mogą nadawać nowe role.

@@ -1,0 +1,1 @@
+System zabezpieczeń opiera się na rolach i uprawnieniach. Dostęp do poszczególnych modułów systemu jest ograniczany zgodnie z przypisaną rolą użytkownika. Wszystkie żądania są logowane, a sesje wygasają po 30 minutach nieaktywności. Komunikacja z API jest szyfrowana przy użyciu protokołu TLS 1.3.

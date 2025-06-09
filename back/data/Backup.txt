@@ -1,0 +1,1 @@
+Dane są backupowane codziennie o godzinie 02:00 do zewnętrznego, szyfrowanego magazynu S3. Backupy są przechowywane przez 30 dni. Dodatkowo, co niedzielę wykonywany jest backup pełny.

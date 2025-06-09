@@ -1,0 +1,1 @@
+Wdrożenie aplikacji odbywa się automatycznie z wykorzystaniem GitHub Actions i Dockera. Środowisko produkcyjne korzysta z klastra Kubernetes. Przed każdym wdrożeniem uruchamiane są testy integracyjne.

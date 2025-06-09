@@ -1,0 +1,1 @@
+Fakturowanie odbywa się na początku każdego miesiąca. Klienci mogą płacić kartą, przelewem lub przez PayPal. Każdy klient ma dostęp do historii faktur w panelu użytkownika.

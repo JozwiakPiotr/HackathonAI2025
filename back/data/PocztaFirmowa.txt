@@ -1,0 +1,1 @@
+Firmowa poczta elektroniczna opiera się na Microsoft Exchange Online. Użytkownicy mogą konfigurować skrzynki na komputerach i telefonach przez protokół IMAP/SMTP lub Outlook. Poczta wspiera podpisy cyfrowe i szyfrowanie.
