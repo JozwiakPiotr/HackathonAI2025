@@ -4,7 +4,8 @@ import axios from 'axios'
 interface Message {
   role: 'user' | 'assistant'
   content: string
-  timestamp: string
+  timestamp: string,
+  sources: string[]
 }
 
 const Chat = () => {
@@ -29,7 +30,8 @@ const Chat = () => {
     const userMessage: Message = {
       role: 'user',
       content: input,
-      timestamp: new Date().toLocaleString()
+      timestamp: new Date().toLocaleString(),
+      sources: []
     }
     setMessages((prev) => [...prev, userMessage])
     setInput('')
@@ -44,7 +46,8 @@ const Chat = () => {
       const assistantMessage: Message = {
         role: 'assistant',
         content: response.data.response || response.data.answer || 'No response received',
-        timestamp: new Date().toLocaleString()
+        timestamp: new Date().toLocaleString(),
+        sources: response.data.sources || 'No sources provided'
       }
       setMessages((prev) => [...prev, assistantMessage])
     } catch (error: any) {
@@ -118,6 +121,13 @@ const Chat = () => {
                 marginTop: '0.5rem'
               }}>
                 {message.timestamp}
+              </div>
+              <div style={{ 
+                fontSize: '0.75rem', 
+                color: message.role === 'user' ? 'rgba(255,255,255,0.8)' : '#718096',
+                marginTop: '0.5rem'
+              }}>
+                {message.sources.join(', ')}
               </div>
             </div>
           </div>
