@@ -175,6 +175,7 @@ const Chat = () => {
                   marginTop: '0.25rem',
                   paddingLeft: '1.2rem',
                   marginBottom: 0,
+                  listStyle: 'none'
                 }}
               >
                 {message.sources.map((source, i) => (
