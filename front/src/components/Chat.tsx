@@ -10,15 +10,97 @@ const Chat = () => {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [documents, setDocuments] = useState<string[]>([])
+  const [showOptions, setShowOptions] = useState(false);
+  const [selected, setSelected] = useState('wybierz dokument');
   const [error, setError] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const toggleDropdown = () => setShowOptions(!showOptions);
+
+  const handleSelect = (option: string) => {
+    setSelected(option);
+    setShowOptions(false);
+  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
 
+  const Dropdown = () => {
+    return (
+      <div style={{ position: 'relative', display: 'inline-block', width: '200px' }}>
+        <button
+          onClick={toggleDropdown}
+          style={{
+            padding: '8px 12px',
+            fontSize: '16px',
+            cursor: 'pointer',
+            backgroundColor: 'white',
+            border: '1px solid #ccc',
+            borderRadius: '4px',
+            width: '100%',
+            textAlign: 'left'
+          }}
+        >
+          {selected} ⬆
+        </button>
+  
+        {showOptions && (
+          <div
+            style={{
+              position: 'absolute',
+              bottom: '100%', 
+              left: 0,
+              backgroundColor: 'white',
+              border: '1px solid #ccc',
+              borderRadius: '4px',
+              marginBottom: '4px',
+              width: '100%',
+              maxHeight: '150px',
+              overflowY: 'auto',
+              zIndex: 100
+            }}
+          >
+            {documents.map((doc) => (
+              <div
+                key={doc}
+                onClick={() => handleSelect(doc)}
+                style={{
+                  padding: '8px 12px',
+                  cursor: 'pointer',
+                  borderBottom: '1px solid #eee'
+                }}
+                onMouseEnter={(e) =>
+                  (e.currentTarget.style.backgroundColor = '#f0f0f0')
+                }
+                onMouseLeave={(e) =>
+                  (e.currentTarget.style.backgroundColor = 'white')
+                }
+              >
+                {doc}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const fetchDocuments = async () => {
+    try {
+      const response = await axios.get('http://172.20.3.133:8000/document_list/')
+      const docs: string[] = response.data.documents || []
+      docs.unshift("wybierz dokument")
+      setDocuments(docs)
+    } catch (error: any) {
+      console.error('Error fetching documents:', error)
+    } finally {
+    }
+  }
+
   useEffect(() => {
-    scrollToBottom()
+    scrollToBottom(),
+    fetchDocuments()
   }, [messages])
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -32,7 +114,11 @@ const Chat = () => {
     setError(null)
 
     try {
-      const response = await axios.post(`http://172.20.3.133:8000/query?query=${encodeURIComponent(input)}`)
+      let url = `http://172.20.3.133:8000/query?query=${encodeURIComponent(input)}`
+      if(selected != 'wybierz dokument'){
+        url += `&file=${encodeURIComponent(selected)}`
+      }
+      const response = await axios.post(url)
 
       const assistantMessage: Message = {
         role: 'assistant',
@@ -51,7 +137,7 @@ const Chat = () => {
     <div style={{
       display: 'flex',
       flexDirection: 'column',
-      height: 'calc(100vh - 100px)',
+      height: 'calc(100vh - 150px)',
       backgroundColor: 'white',
       borderRadius: '8px',
       boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
@@ -131,6 +217,7 @@ const Chat = () => {
             fontSize: '1rem'
           }}
         />
+        <Dropdown />
         <button
           type="submit"
           disabled={isLoading || !input.trim()}
