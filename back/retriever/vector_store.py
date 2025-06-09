@@ -22,6 +22,33 @@ POLISH_PROMPT = PromptTemplate(
     input_variables=["question"]
 )
 
+def load_single_doc(file_path, chunk_size=1000, overlap=200):
+    """
+    Load a single document and split it into chunks.
+    Supports PDF, TXT, and MD files.
+    """
+    docs = []
+    splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=overlap)
+
+    # PDF support
+    if file_path.lower().endswith(".pdf"):
+        loader = PyPDFLoader(file_path)
+        pages = loader.load()
+        chunks = splitter.split_documents(pages)
+        for chunk in chunks:
+            chunk.metadata["source"] = os.path.basename(file_path)
+        docs.extend(chunks)
+
+    # TXT and MD files
+    elif file_path.lower().endswith((".txt", ".md")):
+        with open(file_path, "r", encoding="utf-8") as f:
+            content = f.read().strip()
+        chunks = splitter.split_text(content)
+        for chunk in chunks:
+            docs.append(Document(page_content=chunk, metadata={"source": os.path.basename(file_path)}))
+
+    return docs
+
 def load_docs_from_dir(dir_path, chunk_size=1000, overlap=200):
     docs = []
     splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=overlap)
@@ -61,11 +88,16 @@ def build_vector_store(dir_path="data/", force=False):
     vectordb.save_local("faiss_index")
     return vectordb
 
-def ask_question(query):
-    try:
-        db = FAISS.load_local("faiss_index", embedding_model)
-    except Exception:
-        db = build_vector_store()
+def ask_question(query, filename=None):
+    if filename is None:
+        try:
+            db = FAISS.load_local("faiss_index", embedding_model)
+        except Exception:
+            db = build_vector_store()
+    else:
+        db = FAISS.from_documents(load_single_doc(f"data/{filename}"), embedding_model)
+    if not db:
+        raise ValueError("No documents found in the vector store")
 
     qa_chain = RetrievalQA.from_chain_type(
         llm=Ollama(model="llama3"),

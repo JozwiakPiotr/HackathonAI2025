@@ -7,6 +7,6 @@ def extract_audio(input_path: str, output_path: str = "temp_audio.wav"):
         .input(input_path)
         .output(output_path, ac=1, ar='16000')
         .overwrite_output()
-        .run(quiet=True)
+        .run(capture_stdout=True, capture_stderr=True)
     )
     return output_path
