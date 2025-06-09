@@ -4,6 +4,8 @@ from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain.schema import Document
 from langchain.chains import RetrievalQA
 from langchain_community.llms import Ollama
+from langchain_community.document_loaders import PyPDFLoader
+from langchain.text_splitter import RecursiveCharacterTextSplitter
 
 # Load HuggingFace embedding model
 embedding_model = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
@@ -11,21 +13,28 @@ embedding_model = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
 
 def load_docs_from_dir(dir_path, chunk_size=500, overlap=50):
     docs = []
+    splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=overlap)
+
     for fname in os.listdir(dir_path):
-        if not fname.lower().endswith((".txt", ".md")):
-            continue
         fpath = os.path.join(dir_path, fname)
-        with open(fpath, "r", encoding="utf-8") as f:
-            content = f.read().strip()
-        # chunk text
-        start = 0
-        while start < len(content):
-            end = start + chunk_size
-            chunk = content[start:end].strip()
-            if chunk:
-                metadata = {"source": fname}
-                docs.append(Document(page_content=chunk, metadata=metadata))
-            start = end - overlap
+
+        # PDF support
+        if fname.lower().endswith(".pdf"):
+            loader = PyPDFLoader(fpath)
+            pages = loader.load()
+            chunks = splitter.split_documents(pages)
+            for chunk in chunks:
+                chunk.metadata["source"] = fname
+            docs.extend(chunks)
+
+        # TXT and MD files
+        elif fname.lower().endswith((".txt", ".md")):
+            with open(fpath, "r", encoding="utf-8") as f:
+                content = f.read().strip()
+            chunks = splitter.split_text(content)
+            for chunk in chunks:
+                docs.append(Document(page_content=chunk, metadata={"source": fname}))
+
     return docs
 
 def build_vector_store(dir_path="data/", force=False):
@@ -41,18 +50,17 @@ def build_vector_store(dir_path="data/", force=False):
     vectordb.save_local("faiss_index")
     return vectordb
 
-try:
-    db = FAISS.load_local("faiss_index", embedding_model)
-except Exception:
-    db = build_vector_store()
+def ask_question(query):
+    try:
+        db = FAISS.load_local("faiss_index", embedding_model)
+    except Exception:
+        db = build_vector_store()
 
-qa_chain = RetrievalQA.from_chain_type(
-    llm=Ollama(model="llama3"),
-    retriever=db.as_retriever(search_kwargs={"k": 5}),
-    return_source_documents=True,
-)
-
-def retrieve_docs(query):
+    qa_chain = RetrievalQA.from_chain_type(
+        llm=Ollama(model="llama3"),
+        retriever=db.as_retriever(search_kwargs={"k": 5}),
+        return_source_documents=True,
+    )
     result = qa_chain(query)
     return {
         "answer": result["result"],

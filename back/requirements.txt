@@ -1,3 +1,28 @@
+# Core libraries
+langchain>=0.1.16
+langchain-community>=0.0.38
+langchain-ollama
+
+# Vector stores and embeddings
+faiss-cpu>=1.7.4
 chromadb
-sentence-transformers
+sentence-transformers>=2.2.2
+transformers>=4.40.0
+torch>=2.2.0
+
+# LLaMA3 via Ollama
+ollama>=0.1.7
 requests
+
+# Optional / integration
+pydantic>=2.5.3
+fastapi>=0.110.0
+uvicorn[standard]>=0.29.0
+
+# Audio/video processing
+ffmpeg-python
+faster-whisper
+
+# File handling
+python-multipart
+pypd

@@ -1,6 +1,5 @@
 from fastapi import FastAPI, UploadFile, File
-from llm.client import query_ollama
-from retriever.vector_store import retrieve_docs, build_vector_store
+from retriever.vector_store import ask_question, build_vector_store
 from starlette.middleware.cors import CORSMiddleware
 import uuid, os
 from transcriber.audio_utils import extract_audio
@@ -28,11 +27,11 @@ async def query(query: str):
     Endpoint to handle user queries.
     It retrieves relevant documents and generates a response using the LLM + vector store.
     """
-    result = retrieve_docs(query)  # returns dict with 'answer' and 'sources'
+    result = ask_question(query)  # returns dict with 'answer' and 'sources'
 
     return {
         "query": query,
-        "response": result["answer"],
+        "response": result["answer"], 
         "sources": result["sources"]
     }
     
@@ -43,7 +42,7 @@ async def build_vector_store_endpoint():
     This is useful for re-indexing documents.
     """
     try:
-        build_vector_store()
+        build_vector_store(force=True)  # Force rebuild of the vector store
         return {"message": "Vector store built successfully"}
     except Exception as e:
         return {"error": str(e)}
@@ -62,7 +61,7 @@ async def add_document(file: UploadFile = File(...)):
         
         # Here you would typically process the file and add it to the vector store
         # For simplicity, we assume the file is a text document
-        build_vector_store()  # Rebuild vector store
+        build_vector_store(force=True)  # Rebuild vector store
         
         return {"message": f"Document {file.filename} added successfully"}
     except Exception as e:
@@ -95,7 +94,7 @@ async def transcript_and_add_to_vector_store(file: UploadFile = File(...)):
             f.write(transcript)
 
         # Rebuild vector store using all files in /data
-        build_vector_store(data_dir="data")
+        build_vector_store(force=True)
 
         # Cleanup
         os.remove(temp_input)
