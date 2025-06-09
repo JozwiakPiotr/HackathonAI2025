@@ -22,12 +22,14 @@ async def summarize(file: UploadFile = File(...)):
     return {"filename": file.filename, "content_type": file.content_type, "message": "File received successfully. Backend processing will handle the file later."}
 
 @app.post("/query/")
-async def query(query: str):
+async def query(query: str, file: str = None):
     """
     Endpoint to handle user queries.
+    If a file is provided, it will be used to answer the query.
+    If no file is provided, it will use the vector store to answer the query.
     It retrieves relevant documents and generates a response using the LLM + vector store.
     """
-    result = ask_question(query)  # returns dict with 'answer' and 'sources'
+    result = ask_question(query, file)  # returns dict with 'answer' and 'sources'
 
     return {
         "query": query,
